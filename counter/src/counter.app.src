@@ -1,15 +1,10 @@
-{application, counter,
- [{description, "An OTP application"},
+{application,
+ counter,
+ [{description, "Simple OTP Counter Application"},
   {vsn, "0.1.0"},
-  {registered, []},
+  {registered, [counter_sup, counter_server]},
+  {applications, [kernel, stdlib]},
   {mod, {counter_app, []}},
-  {applications,
-   [kernel,
-    stdlib
-   ]},
-  {env,[]},
-  {modules, []},
+  {env, []}]}
 
-  {licenses, ["Apache 2.0"]},
-  {links, []}
- ]}.
+.
