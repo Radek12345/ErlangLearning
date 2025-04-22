@@ -19,5 +19,11 @@ init([]) ->
            restart => permanent,
            shutdown => 5000,
            type => worker,
-           modules => [counter_server]}],
+           modules => [counter_server]},
+         #{id => cowboy,
+           start => {counter_api, start_link, []},
+           restart => permanent,
+           shutdown => 5000,
+           type => worker,
+           modules => [counter_api]}],
     {ok, {SupFlags, ChildSpecs}}.

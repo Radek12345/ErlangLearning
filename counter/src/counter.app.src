@@ -1,9 +1,9 @@
 {application,
  counter,
- [{description, "Simple OTP Counter Application"},
+ [{description, "Simple OTP Counter Application with REST API"},
   {vsn, "0.1.0"},
   {registered, [counter_sup, counter_server]},
-  {applications, [kernel, stdlib]},
+  {applications, [kernel, stdlib, cowboy]},
   {mod, {counter_app, []}},
   {env, []}]}
 
