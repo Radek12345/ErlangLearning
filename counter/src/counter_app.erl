@@ -20,23 +20,38 @@ init_mnesia() ->
     SchemaDir = mnesia:system_info(directory),
 
     %% Tworzymy schema tylko jeśli katalog Mnesia nie istnieje
-    case filelib:is_dir(SchemaDir) of
-        true ->
-            io:format("==> Schema already exists~n"),
+    SchemaResult =
+        case filelib:is_dir(SchemaDir) of
+            true ->
+                io:format("==> Schema already exists~n"),
+                ok;
+            false ->
+                io:format("==> Creating schema~n"),
+                %% najpierw zatrzymaj, jeśli działa
+                case mnesia:system_info(is_running) of
+                    yes ->
+                        mnesia:stop();
+                    no ->
+                        ok
+                end,
+                case mnesia:create_schema([Node]) of
+                    ok ->
+                        io:format("Schema created~n"),
+                        ok;
+                    {error, {_, {already_exists, _}}} ->
+                        io:format("Schema already exists (race condition?)~n"),
+                        ok;
+                    Error ->
+                        io:format("Error creating schema: ~p~n", [Error]),
+                        {error, Error}
+                end
+        end,
+
+    case SchemaResult of
+        ok ->
             ok;
-        false ->
-            io:format("==> Creating schema~n"),
-            case mnesia:create_schema([Node]) of
-                ok ->
-                    io:format("schema CREATED!!!!!!!!!!!!!!!!!!!!!!!!! = ~p~n", [mnesia:schema()]),
-                    ok;
-                {error, {_, {already_exists, _}}} ->
-                    io:format("already exist schema?????????????????? = ~p~n", [mnesia:schema()]),
-                    ok;
-                Error ->
-                    io:format("Error creating schema: ~p~n", [Error]),
-                    {error, Error}
-            end
+        Error3 ->
+            {error, Error3}
     end,
 
     io:format("==> Starting Mnesia~n"),
@@ -50,7 +65,8 @@ init_mnesia() ->
 
     case mnesia:system_info(is_running) of
         yes ->
-            io:format("Mnesia is running~n");
+            io:format("Mnesia is running~n"),
+            ok;
         no ->
             io:format("Mnesia is NOT running!~n"),
             {error, mnesia_not_running}
