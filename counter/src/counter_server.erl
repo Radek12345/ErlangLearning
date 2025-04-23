@@ -19,7 +19,7 @@ get() ->
     gen_server:call(?MODULE, get).
 
 init([]) ->
-    {ok, 0}.
+    {ok, load_counter()}.
 
 handle_call(get, _From, State) ->
     {reply, State, State};
@@ -27,9 +27,13 @@ handle_call(_Msg, _From, State) ->
     {reply, ok, State}.
 
 handle_cast(increment, State) ->
-    {noreply, State + 1};
+    NewState = State + 1,
+    ok = save_counter(NewState),
+    {noreply, NewState};
 handle_cast(decrement, State) ->
-    {noreply, State - 1};
+    NewState = State - 1,
+    ok = save_counter(NewState),
+    {noreply, NewState};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -41,3 +45,15 @@ terminate(_Reason, _State) ->
 
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
+
+load_counter() ->
+    case mnesia:dirty_read(counter, counter_id) of
+        [{counter, counter_id, Value}] ->
+            Value;
+        [] ->
+            ok = mnesia:dirty_write({counter, counter_id, 0}),
+            0
+    end.
+
+save_counter(Value) ->
+    mnesia:dirty_write({counter, counter_id, Value}).
