@@ -16,15 +16,25 @@ stop(_State) ->
     ok.
 
 init_mnesia() ->
-    io:format("==> Creating schema~n"),
-    case mnesia:create_schema([node()]) of
-        ok ->
+    Node = node(),
+    SchemaDir = mnesia:system_info(directory),
+
+    %% Tworzymy schema tylko jeśli katalog Mnesia nie istnieje
+    case filelib:is_dir(SchemaDir) of
+        true ->
+            io:format("==> Schema already exists~n"),
             ok;
-        {error, {_, {already_exists, _}}} ->
-            ok;
-        Error ->
-            io:format("Failed to create schema: ~p~n", [Error]),
-            {error, Error}
+        false ->
+            io:format("==> Creating schema~n"),
+            case mnesia:create_schema([Node]) of
+                ok ->
+                    ok;
+                {error, {_, {already_exists, _}}} ->
+                    ok;
+                Error ->
+                    io:format("Error creating schema: ~p~n", [Error]),
+                    {error, Error}
+            end
     end,
 
     io:format("==> Starting Mnesia~n"),
@@ -32,11 +42,10 @@ init_mnesia() ->
         ok ->
             io:format("Mnesia start OK~n");
         {error, Reason} ->
-            io:format("Mnesia failed to start: ~p~n", [Reason]),
+            io:format("Error starting Mnesia: ~p~n", [Reason]),
             {error, Reason}
     end,
 
-    %% Sprawdź czy Mnesia działa
     case mnesia:system_info(is_running) of
         yes ->
             io:format("Mnesia is running~n");
@@ -47,7 +56,7 @@ init_mnesia() ->
 
     io:format("==> Creating table~n"),
     case mnesia:create_table(counter,
-                             [{attributes, [id, value]}, {ram_copies, [node()]}, {type, set}])
+                             [{attributes, [id, value]}, {disc_copies, [Node]}, {type, set}])
     of
         {atomic, ok} ->
             io:format("Table created successfully~n"),
