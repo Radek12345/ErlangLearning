@@ -28,8 +28,10 @@ init_mnesia() ->
             io:format("==> Creating schema~n"),
             case mnesia:create_schema([Node]) of
                 ok ->
+                    io:format("schema CREATED!!!!!!!!!!!!!!!!!!!!!!!!! = ~p~n", [mnesia:schema()]),
                     ok;
                 {error, {_, {already_exists, _}}} ->
+                    io:format("already exist schema?????????????????? = ~p~n", [mnesia:schema()]),
                     ok;
                 Error ->
                     io:format("Error creating schema: ~p~n", [Error]),
