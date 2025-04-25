@@ -37,11 +37,12 @@ handle_cast(decrement, State) ->
     NewState = State - 1,
     ok = save_counter(NewState),
     {noreply, NewState};
-handle_cast(_Msg, State) ->
-    {noreply, State};
 handle_cast({reset, NewValue}, _State) ->
     ok = save_counter(NewValue),
-    {noreply, NewValue}.
+    {noreply, NewValue};
+handle_cast(Msg, State) ->
+    io:format("UNHANDLED cast: ~p~n", [Msg]),
+    {noreply, State}.
 
 handle_info(_Info, State) ->
     {noreply, State}.
