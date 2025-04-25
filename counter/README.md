@@ -7,6 +7,15 @@ An OTP application
 rebar3 compile
 rebar3 shell
 
+## Run
+
+curl http://localhost:8080/counter
+curl -X POST http://localhost:8080/counter/increment
+curl -X POST http://localhost:8080/counter/decrement
+curl -X POST -H "Content-Type: application/json" -d '{"value": 42}' http://localhost:8080/counter/reset
+
+
+
 --- mnesia helper -----
 
 rm -rf Mnesia* _.DCD _.LOG
