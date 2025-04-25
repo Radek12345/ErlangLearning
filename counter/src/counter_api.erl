@@ -7,7 +7,8 @@ start_link() ->
         cowboy_router:compile([{'_',
                                 [{"/counter", ?MODULE, []},
                                  {"/counter/increment", ?MODULE, []},
-                                 {"/counter/decrement", ?MODULE, []}]}]),
+                                 {"/counter/decrement", ?MODULE, []},
+                                 {"/counter/reset", ?MODULE, []}]}]),
     {ok, _} =
         cowboy:start_clear(counter_api, [{port, 8080}], #{env => #{dispatch => Dispatch}}),
     {ok, self()}.
@@ -36,6 +37,25 @@ init(Req = #{method := <<"POST">>, path := <<"/counter/decrement">>}, State) ->
                          jiffy:encode(#{status => <<"ok">>}),
                          Req),
     {ok, Req2, State};
+init(Req = #{method := <<"POST">>, path := <<"/counter/reset">>}, State) ->
+    {ok, Body, Req1} = cowboy_req:read_body(Req),
+    case jiffy:decode(Body, [return_maps]) of
+        #{<<"value">> := NewValue} when is_integer(NewValue) ->
+            counter_server:reset(NewValue),
+            Req2 =
+                cowboy_req:reply(200,
+                                 #{<<"content-type">> => <<"application/json">>},
+                                 jiffy:encode(#{status => <<"ok">>}),
+                                 Req1),
+            {ok, Req2, State};
+        _ ->
+            Req2 =
+                cowboy_req:reply(400,
+                                 #{<<"content-type">> => <<"application/json">>},
+                                 jiffy:encode(#{error => <<"Invalid or missing value">>}),
+                                 Req1),
+            {ok, Req2, State}
+    end;
 init(Req, State) ->
     Req2 =
         cowboy_req:reply(404,
