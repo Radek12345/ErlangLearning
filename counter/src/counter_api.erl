@@ -52,16 +52,9 @@ init(Req0, State) ->
                     reply_ok(Req0, State);
                 ResetPath ->
                     {ok, Body, Req1} = cowboy_req:read_body(Req0),
-                    try jiffy:decode(Body, [return_maps]) of
-                        #{<<"value">> := NewValue} when is_integer(NewValue) ->
-                            counter_server:reset(CounterId, NewValue),
-                            reply_ok(Req1, State);
-                        _ ->
-                            reply_error(400, <<"Invalid or missing value">>, Req1, State)
-                    catch
-                        error:badarg ->
-                            reply_error(400, <<"Invalid JSON">>, Req1, State)
-                    end;
+                    #{<<"value">> := NewValue} = jiffy:decode(Body, [return_maps]),
+                    counter_server:reset(CounterId, NewValue),
+                    reply_ok(Req1, State);
                 _ ->
                     reply_error(404, <<"Not found">>, Req0, State)
             end;
