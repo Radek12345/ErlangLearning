@@ -20,4 +20,8 @@ init_mnesia() ->
     mnesia:create_schema([node()]),
     mnesia:start(),
     mnesia:create_table(counter, [{attributes, [id, value]}, {disc_copies, [node()]}]),
-    mnesia:wait_for_tables([counter], 10000).
+    mnesia:create_table(counter_history,
+                        [{attributes, [id, operation, timestamp]},
+                         {disc_copies, [node()]},
+                         {type, bag}]),
+    mnesia:wait_for_tables([counter, counter_history], 10000).

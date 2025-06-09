@@ -9,7 +9,8 @@ start_link() ->
                                  {"/counters/:id", ?MODULE, []},
                                  {"/counters/:id/increment", ?MODULE, []},
                                  {"/counters/:id/decrement", ?MODULE, []},
-                                 {"/counters/:id/reset", ?MODULE, []}]}]),
+                                 {"/counters/:id/reset", ?MODULE, []},
+                                 {"/counters/:id/history", ?MODULE, []}]}]),
     {ok, _} =
         cowboy:start_clear(counter_api, [{port, 8080}], #{env => #{dispatch => Dispatch}}),
     {ok, self()}.
@@ -31,12 +32,23 @@ init(Req0, State) ->
         {<<"GET">>, _} ->
             IdBin = cowboy_req:binding(id, Req0),
             CounterId = binary_to_atom(IdBin, utf8),
-            Value = counter_server:get(CounterId),
-            Req = cowboy_req:reply(200,
-                                   #{<<"content-type">> => <<"application/json">>},
-                                   jiffy:encode(#{value => Value}),
-                                   Req0),
-            {ok, Req, State};
+            HistoryPath = <<"/counters/", IdBin/binary, "/history">>,
+            case Path of
+                HistoryPath ->
+                    History = counter_server:get_history(CounterId),
+                    Req = cowboy_req:reply(200,
+                                           #{<<"content-type">> => <<"application/json">>},
+                                           jiffy:encode(#{history => History}),
+                                           Req0),
+                    {ok, Req, State};
+                _ ->
+                    Value = counter_server:get(CounterId),
+                    Req = cowboy_req:reply(200,
+                                           #{<<"content-type">> => <<"application/json">>},
+                                           jiffy:encode(#{value => Value}),
+                                           Req0),
+                    {ok, Req, State}
+            end;
         {<<"POST">>, Path} ->
             IdBin = cowboy_req:binding(id, Req0),
             CounterId = binary_to_atom(IdBin, utf8),
