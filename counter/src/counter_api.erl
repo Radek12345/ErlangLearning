@@ -58,6 +58,11 @@ init(Req0, State) ->
                 _ ->
                     reply_error(404, <<"Not found">>, Req0, State)
             end;
+        {<<"DELETE">>, _} ->
+            IdBin = cowboy_req:binding(id, Req0),
+            CounterId = binary_to_atom(IdBin, utf8),
+            counter_server:delete(CounterId),
+            reply_ok(Req0, State);
         _ ->
             reply_error(404, <<"Not found">>, Req0, State)
     end.

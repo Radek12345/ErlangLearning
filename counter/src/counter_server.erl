@@ -2,7 +2,7 @@
 
 -behaviour(gen_server).
 
--export([start_link/0, increment/1, decrement/1, get/1, list_counters/0]).
+-export([start_link/0, increment/1, decrement/1, get/1, list_counters/0, delete/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3,
          reset/2]).
 
@@ -20,6 +20,9 @@ get(Id) ->
 
 reset(Id, NewValue) ->
     gen_server:cast(?MODULE, {reset, Id, NewValue}).
+
+delete(Id) ->
+    gen_server:cast(?MODULE, {delete, Id}).
 
 list_counters() ->
     gen_server:call(?MODULE, list_counters).
@@ -46,6 +49,9 @@ handle_cast({decrement, Id}, State) ->
     {noreply, State};
 handle_cast({reset, Id, NewValue}, State) ->
     ok = save_counter(Id, NewValue),
+    {noreply, State};
+handle_cast({delete, Id}, State) ->
+    mnesia:dirty_delete({counter, Id}),
     {noreply, State};
 handle_cast(Msg, State) ->
     io:format("UNHANDLED cast: ~p~n", [Msg]),
