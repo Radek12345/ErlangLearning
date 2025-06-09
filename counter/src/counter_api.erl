@@ -42,10 +42,15 @@ init(Req0, State) ->
                                            Req0),
                     {ok, Req, State};
                 _ ->
-                    Value = counter_server:get(CounterId),
+                    case counter_server:get(CounterId) of
+                        {ok, Value} ->
+                            RespJson = jiffy:encode(#{value => Value});
+                        {error, expired} ->
+                            RespJson = jiffy:encode(#{error => <<"expired">>})
+                    end,
                     Req = cowboy_req:reply(200,
                                            #{<<"content-type">> => <<"application/json">>},
-                                           jiffy:encode(#{value => Value}),
+                                           RespJson,
                                            Req0),
                     {ok, Req, State}
             end;
